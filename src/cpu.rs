@@ -1,7 +1,8 @@
 mod bus;
-use bus::Bus;
+pub mod instructions;
 
 use bitflags::bitflags;
+use bus::Bus;
 use std::fmt;
 
 bitflags! {
@@ -127,8 +128,7 @@ impl Instruction {
 }
 
 impl Cpu {
-    // Returns cycle count
-    pub fn execute_instr(&mut self, instr: Instruction) -> u8 {
+    pub fn execute_instr(&mut self, instr: Instruction) {
         let (argb, argw) = (
             self.bus.read_byte(self.program_counter + 1) as u16,
             self.bus.read_word(self.program_counter + 1) as u16,
@@ -136,7 +136,7 @@ impl Cpu {
 
         self.program_counter += instr.get_length();
 
-        instr.cycle_count
+        let cycles = instr.cycle_count
             + match instr.addresing_mode {
                 AddresingMode::NON => (instr.execute)(self, &instr, 0),
                 AddresingMode::ZPG => (instr.execute)(self, &instr, argb),
@@ -156,14 +156,12 @@ impl Cpu {
                 AddresingMode::IDY => {
                     (instr.execute)(self, &instr, self.bus.read_word(argw) + self.reg_y as u16)
                 }
-            }
+            };
+
+        self.bus.cycle(cycles)
     }
 
-    pub fn execute_opcode(&mut self, opcode: u8) -> u8 {
+    pub fn execute_opcode(&mut self, opcode: u8) {
         self.execute_instr(self.opcode_table[opcode as usize])
     }
-}
-
-fn main() {
-    
 }

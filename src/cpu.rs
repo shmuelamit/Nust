@@ -114,6 +114,16 @@ impl Default for Opcode {
     }
 }
 
+impl CpuFlags {
+    pub fn get_bit(&self, flag: Self) -> u8 {
+        if self.contains(flag) {
+            1
+        } else {
+            0
+        }
+    }
+}
+
 impl Opcode {
     fn get_length(&self) -> u16 {
         match self.addresing_mode {

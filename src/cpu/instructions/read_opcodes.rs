@@ -2,9 +2,6 @@ use super::utils::*;
 use crate::cpu::*;
 
 /*
-           Y    Y    Y    Y    Y    Y              Y    Y    Y
-Those are LDA, LDX, LDY, EOR, AND, ORA, ADC, SBC, CMP, BIT, NOP
-
 According to 6502_cpu.txt the ways to handle the addressing modes are the following:
 
   Absolute addressing
@@ -89,16 +86,6 @@ According to 6502_cpu.txt the ways to handle the addressing modes are the follow
                 was invalid during cycle #5, i.e. page boundary was crossed.
 */
 
-// return input, value, cross
-fn read_instr_value(cpu: &mut Cpu, mode: AddresingMode) -> (u16, u8, bool) {
-    let (input, cross) = get_input(cpu, mode);
-    let value = get_value(cpu, mode, input);
-    if cross {
-        cpu.bus.cycle(1)
-    }
-    (input, value, cross)
-}
-
 pub fn instr_lda(cpu: &mut Cpu, mode: AddresingMode) {
     let (input, value, cross) = read_instr_value(cpu, mode);
     cpu.reg_a = value;
@@ -149,3 +136,22 @@ pub fn instr_bit(cpu: &mut Cpu, mode: AddresingMode) {
 }
 
 pub fn instr_nop(cpu: &mut Cpu, mode: AddresingMode) {}
+
+fn _add(cpu: &mut Cpu, value: u8) {
+    let sum = cpu.reg_a as u16 + value as u16 + cpu.status.get_bit(CpuFlags::C) as u16;
+    let result = sum as u8;
+    cpu.status.set(CpuFlags::C, sum >> 8 != 0);
+    cpu.status.set(CpuFlags::V, (cpu.reg_a ^ result) & (value & result) & 0x80 != 0);
+    cpu.reg_a = result;
+    set_nz_flags(cpu, result);
+}
+
+pub fn instr_adc(cpu: &mut Cpu, mode: AddresingMode) {
+    let (input, value, cross) = read_instr_value(cpu, mode);
+    _add(cpu, value);
+}
+
+pub fn instr_sbc(cpu: &mut Cpu, mode: AddresingMode) {
+    let (input, value, cross) = read_instr_value(cpu, mode);
+    _add(cpu, ((value as i8).wrapping_neg().wrapping_sub(1)) as u8);
+}

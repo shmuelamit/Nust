@@ -43,3 +43,12 @@ pub fn get_input(cpu: &mut Cpu, addresing_mode: AddresingMode) -> (u16, bool) {
         AddresingMode::IDY => add_chk_page_cross(cpu.bus.read_word(argw), cpu.reg_y as u16),
     }
 }
+
+pub fn read_instr_value(cpu: &mut Cpu, mode: AddresingMode) -> (u16, u8, bool) {
+    let (input, cross) = get_input(cpu, mode);
+    let value = get_value(cpu, mode, input);
+    if cross {
+        cpu.bus.cycle(1)
+    }
+    (input, value, cross)
+}

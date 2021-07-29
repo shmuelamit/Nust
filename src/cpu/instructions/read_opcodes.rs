@@ -135,8 +135,6 @@ pub fn instr_bit(cpu: &mut Cpu, mode: AddresingMode) {
     cpu.status.set(CpuFlags::Z, value & cpu.reg_a == 0)
 }
 
-pub fn instr_nop(cpu: &mut Cpu, mode: AddresingMode) {}
-
 fn _add(cpu: &mut Cpu, value: u8) {
     let sum = cpu.reg_a as u16 + value as u16 + cpu.status.get_bit(CpuFlags::C) as u16;
     let result = sum as u8;

@@ -54,7 +54,7 @@ pub fn instr_inc(cpu: &mut Cpu, mode: AddresingMode) {
     set_nz_flags(cpu, newval);
 }
 
-pub fn instr_sub(cpu: &mut Cpu, mode: AddresingMode) {
+pub fn instr_dec(cpu: &mut Cpu, mode: AddresingMode) {
     let (input, value, cross) = read_instr_value(cpu, mode);
     let newval = value.wrapping_sub(1);
     set_nz_flags(cpu, newval);

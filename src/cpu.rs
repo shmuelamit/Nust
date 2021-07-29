@@ -168,7 +168,8 @@ impl Cpu {
     }
 
     pub fn stack_push_word(&mut self, value: u16) {
-        self.bus.write_word(0x100 + self.stack_pointer as u16, value);
+        self.bus
+            .write_word(0x100 + self.stack_pointer as u16, value);
         self.stack_pointer -= 1;
     }
 

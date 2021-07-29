@@ -2,7 +2,7 @@ use crate::cpu::*;
 
 pub fn get_value(cpu: &mut Cpu, mode: AddresingMode, input: u16) -> u8 {
     if mode.is_input_address() {
-        cpu.bus.read_byte(input)
+        cpu.bus.read(input)
     } else {
         input as u8
     }
@@ -22,7 +22,7 @@ fn add_chk_page_cross(addr: u16, offset: u16) -> (u16, bool) {
 // also returns if we crossed a page
 pub fn get_input(cpu: &mut Cpu, addresing_mode: AddresingMode) -> (u16, bool) {
     let (argb, argw) = (
-        cpu.bus.read_byte(cpu.program_counter + 1),
+        cpu.bus.read(cpu.program_counter + 1),
         cpu.bus.read_word(cpu.program_counter + 1),
     );
 
@@ -44,6 +44,7 @@ pub fn get_input(cpu: &mut Cpu, addresing_mode: AddresingMode) -> (u16, bool) {
     }
 }
 
+// SHOULD BE USED ONLY ONCED PER INSTRUCTION
 pub fn read_instr_value(cpu: &mut Cpu, mode: AddresingMode) -> (u16, u8, bool) {
     let (input, cross) = get_input(cpu, mode);
     let value = get_value(cpu, mode, input);

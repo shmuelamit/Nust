@@ -1,3 +1,7 @@
 mod cpu;
-
-fn main() {}
+use cpu::*;
+fn main() {
+	let cpu = &mut Cpu::default();
+	cpu.status.insert(CpuFlags::all());
+	println!("{}", cpu);
+}

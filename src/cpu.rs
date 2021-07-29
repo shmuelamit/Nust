@@ -13,6 +13,7 @@ bitflags! {
         const I = 0b00000100;
         const D = 0b00001000;
         const B = 0b00010000;
+        const Bs = 0b00100000; // The bullshit flag
         const V = 0b01000000;
         const N = 0b10000000;
     }
@@ -159,5 +160,25 @@ impl Cpu {
         (opcode.instr.execute)(self, opcode.addresing_mode);
 
         self.bus.cycle(opcode.cycle_count)
+    }
+
+    pub fn stack_push(&mut self, value: u8) {
+        self.bus.write(0x100 + self.stack_pointer as u16, value);
+        self.stack_pointer -= 1;
+    }
+
+    pub fn stack_push_word(&mut self, value: u16) {
+        self.bus.write_word(0x100 + self.stack_pointer as u16, value);
+        self.stack_pointer -= 1;
+    }
+
+    pub fn stack_pop(&mut self) -> u8 {
+        self.stack_pointer += 1;
+        self.bus.read(0x100 + self.stack_pointer as u16)
+    }
+
+    pub fn stack_pop_word(&mut self) -> u16 {
+        self.stack_pointer += 1;
+        self.bus.read_word(0x100 + self.stack_pointer as u16)
     }
 }

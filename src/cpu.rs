@@ -70,7 +70,7 @@ impl Default for Cpu {
             reg_y: 0,
             status: CpuFlags::empty(),
             stack_pointer: 0xFF,
-            opcode_table: [Opcode::default(); 256],
+            opcode_table: instructions::get_opcode_table(),
             bus: Bus::default(),
         }
     }

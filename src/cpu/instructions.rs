@@ -21,7 +21,8 @@ fn make_opcode(
     }
 }
 
-pub fn set_opcode_table(table: &mut [Opcode; 256]) {
+pub fn get_opcode_table() -> [Opcode; 256] {
+    let mut table = [Opcode::default(); 256];
     table[0x69] = make_opcode("ADC", read_opcodes::instr_adc, AddresingMode::IMM, 2);
     table[0x65] = make_opcode("ADC", read_opcodes::instr_adc, AddresingMode::ZPG, 3);
     table[0x75] = make_opcode("ADC", read_opcodes::instr_adc, AddresingMode::ZPX, 4);
@@ -203,4 +204,6 @@ pub fn set_opcode_table(table: &mut [Opcode; 256]) {
     table[0x84] = make_opcode("STY", write_opcodes::instr_sty, AddresingMode::ZPG, 3);
     table[0x94] = make_opcode("STY", write_opcodes::instr_sty, AddresingMode::ZPX, 4);
     table[0x8c] = make_opcode("STY", write_opcodes::instr_sty, AddresingMode::ABS, 4);
+
+    table
 }

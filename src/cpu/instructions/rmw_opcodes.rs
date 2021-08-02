@@ -25,37 +25,37 @@ fn general_shift(
 }
 
 pub fn instr_asl(cpu: &mut Cpu, mode: AddresingMode) {
-    let (input, value, cross) = read_instr_value(cpu, mode);
+    let (input, value, _cross) = read_instr_value(cpu, mode);
     cpu.status.set(CpuFlags::C, value & (1u8 << 7) != 0);
     general_shift(cpu, mode, input, value, u8::wrapping_shl);
 }
 
 pub fn instr_lsr(cpu: &mut Cpu, mode: AddresingMode) {
-    let (input, value, cross) = read_instr_value(cpu, mode);
+    let (input, value, _cross) = read_instr_value(cpu, mode);
     cpu.status.set(CpuFlags::C, value & 1 != 0);
     general_shift(cpu, mode, input, value, u8::wrapping_shr);
 }
 
 pub fn instr_rol(cpu: &mut Cpu, mode: AddresingMode) {
-    let (input, value, cross) = read_instr_value(cpu, mode);
+    let (input, value, _cross) = read_instr_value(cpu, mode);
     cpu.status.set(CpuFlags::C, value & (1u8 << 7) != 0);
     general_shift(cpu, mode, input, value, u8::rotate_right);
 }
 
 pub fn instr_ror(cpu: &mut Cpu, mode: AddresingMode) {
-    let (input, value, cross) = read_instr_value(cpu, mode);
+    let (input, value, _cross) = read_instr_value(cpu, mode);
     cpu.status.set(CpuFlags::C, value & 1 != 0);
     general_shift(cpu, mode, input, value, u8::rotate_right);
 }
 
 pub fn instr_inc(cpu: &mut Cpu, mode: AddresingMode) {
-    let (input, value, cross) = read_instr_value(cpu, mode);
+    let (_input, value, _cross) = read_instr_value(cpu, mode);
     let newval = value.wrapping_add(1);
     set_nz_flags(cpu, newval);
 }
 
 pub fn instr_dec(cpu: &mut Cpu, mode: AddresingMode) {
-    let (input, value, cross) = read_instr_value(cpu, mode);
+    let (_input, value, _cross) = read_instr_value(cpu, mode);
     let newval = value.wrapping_sub(1);
     set_nz_flags(cpu, newval);
 }

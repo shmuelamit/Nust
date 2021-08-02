@@ -1,4 +1,9 @@
 use bitflags::bitflags;
+use nom::bytes::complete::tag;
+
+use nom::error::context;
+use nom::IResult;
+
 
 // Decided to implement INES instead of NES 2.0 out of pure laziness
 // might change later to the fancier format but for now we have backwards compatability
@@ -16,27 +21,43 @@ pub struct InesFile {
 
 bitflags! {
     #[derive(Default)]
-    pub struct InesHeaderFlags: u32 {
-        const mirroring =   1u32 << 1;
-		const persistence = 1u32 << 2;
-        const trainer =     1u32 << 3;
-        const four_screen = 1u32 << 4;
-        const unisystem =   1u32 << 5;
-        const playchoice =  1u32 << 6;
-        const tv_system =   1u32 << 7;
-        const prg_ram =     1u32 << 8;
-        const bus_confs =   1u32 << 8;
+    pub struct InesFlags6: u8 {
+        const MIRRORING =   1u8 << 1;
+        const PERSISTENCE = 1u8 << 2;
+        const TRAINER =     1u8 << 3;
+        const FOUR_SCREEN = 1u8 << 4;
     }
 }
 
+bitflags! {
+    #[derive(Default)]
+    pub struct InesFlags7: u8 {
+        const UNISYSTEM =   1u8 << 1;
+        const PLAYCHOICE =  1u8 << 2;
+        const NES2 =        1u8 << 4;
+    }
+}
+
+pub struct InesHeaderFlags {
+    flags6: InesFlags6,
+    flags7: InesFlags7,
+}
+
 pub struct InesHeader {
-    signature: [u8; 4], // NES<EOF>
-    prg_size: u8,       // In 16Kib units
-    chr_size: u8,       // In 8Kib units
+    signature: [u8; 4],
+    // NES<EOF>
+    prg_size: u8,
+    // In 16Kib units
+    chr_size: u8,
+    // In 8Kib units
     flags: InesHeaderFlags,
     mapper: u16,
 
-    // rarelu used
+    // rarely used
     prg_ram_size: Option<u8>,
-    tv_system_type: Option<u8>
+    tv_system_type: Option<u8>,
+}
+
+pub fn sign_parse(input: &[u8]) -> IResult<&[u8], &[u8]> {
+    context("Signature", tag(b"NES\x1A"))(input)
 }

@@ -1,9 +1,11 @@
-mod bus;
-pub mod instructions;
+use std::fmt;
 
 use bitflags::bitflags;
+
 use bus::Bus;
-use std::fmt;
+
+mod bus;
+pub mod instructions;
 
 bitflags! {
     #[derive(Default)]
@@ -13,7 +15,7 @@ bitflags! {
         const I = 0b00000100;
         const D = 0b00001000;
         const B = 0b00010000;
-        const Bs = 0b00100000; // The bullshit flag
+        const BS = 0b00100000; // The bullshit flag
         const V = 0b01000000;
         const N = 0b10000000;
     }

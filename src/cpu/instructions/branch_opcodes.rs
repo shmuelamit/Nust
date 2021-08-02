@@ -2,7 +2,7 @@ use super::utils::*;
 use crate::cpu::*;
 
 fn branch(cpu: &mut Cpu, mode: AddresingMode) {
-    let (input, value, cross) = read_instr_value(cpu, mode);
+    let (_input, value, _cross) = read_instr_value(cpu, mode);
     let value = value as i8;
     cpu.bus.cycle(1);
 

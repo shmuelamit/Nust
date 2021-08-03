@@ -1,5 +1,6 @@
 mod utils;
 use crate::cpu::*;
+use std::fmt::{Display, Formatter};
 
 pub mod branch_opcodes;
 pub mod imp_opcodes;
@@ -7,6 +8,139 @@ pub mod read_opcodes;
 pub mod rmw_opcodes;
 pub mod routine_opcodes;
 pub mod write_opcodes;
+
+#[derive(Clone, Copy)]
+pub enum AddresingMode {
+    NON, // Invalid Instruction
+    ZPG, // Zero page
+    ZPX, // Zero page, X
+    ZPY, // Zero page, Y
+    ABS, // Absolute
+    ABX, // Absolute, X
+    ABY, // Absolute, Y
+    IND, // Indirect
+    IMP, // Implied
+    ACC, // Accumulator
+    IMM, // Immediate
+    REL, // Relative
+    IDX, // (Indirect, X)
+    IDY, // (Indirect), Y
+}
+
+#[derive(Clone, Copy)]
+pub struct Instruction {
+    pub name: &'static str,
+    pub execute: fn(&mut Cpu, AddresingMode),
+}
+
+#[derive(Clone, Copy)]
+pub struct Opcode {
+    pub instr: Instruction,
+    pub addresing_mode: AddresingMode,
+    pub cycle_count: u8,
+}
+
+impl Default for Instruction {
+    fn default() -> Self {
+        Self {
+            name: "INV",
+            execute: |cpu: &mut Cpu, _mode: AddresingMode| {
+                panic!(
+                    "Invalid CPU instruction {:02X}!\nCPU state at invalid instruction:\n{}",
+                    cpu.bus.read(cpu.program_counter), cpu
+                )
+            },
+        }
+    }
+}
+
+impl Default for Opcode {
+    fn default() -> Self {
+        Self {
+            instr: Instruction::default(),
+            addresing_mode: AddresingMode::NON,
+            cycle_count: 0,
+        }
+    }
+}
+
+impl Opcode {
+    pub fn get_length(&self) -> u16 {
+        match self.addresing_mode {
+            AddresingMode::IMP | AddresingMode::ACC => 1,
+            AddresingMode::ZPG
+            | AddresingMode::ZPX
+            | AddresingMode::ZPY
+            | AddresingMode::IMM
+            | AddresingMode::REL
+            | AddresingMode::IDX
+            | AddresingMode::IDY => 2,
+            _ => 3,
+        }
+    }
+}
+
+// Used for debugging purposes
+pub fn addr_to_instr(cpu: &Cpu, addr: u16) -> String {
+    let (opcode, argb, argw) = (
+        cpu.bus.read(addr),
+        cpu.bus.read(addr + 1),
+        cpu.bus.read_word(addr + 1),
+    );
+
+    let opcode = cpu.get_opcode_table()[opcode as usize];
+
+    (opcode.instr.name.to_string()
+        + " "
+        + &match opcode.addresing_mode {
+            AddresingMode::NON => "".to_string(),
+            AddresingMode::ZPG => format!("${:02x}", argb),
+            AddresingMode::ZPX => format!("${:02X}, X", argb),
+            AddresingMode::ZPY => format!("${:02X}, Y", argb),
+            AddresingMode::ABS => format!("${:04X}", argw),
+            AddresingMode::ABX => format!("${:04X}, X", argw),
+            AddresingMode::ABY => format!("${:04X}, Y", argw),
+            AddresingMode::IND => format!("(${:04X})", argw),
+            AddresingMode::IMP => "".to_string(),
+            AddresingMode::ACC => "A".to_string(),
+            AddresingMode::IMM => format!("#{:02X}", argb),
+            AddresingMode::REL => format!(
+                "*{:>+} [{:04X}]",
+                argb as i8,
+                (addr as i16).wrapping_add((argb as i8) as i16) as u16
+            ),
+            AddresingMode::IDX => format!("(${:02X}, X)", argb),
+            AddresingMode::IDY => format!("(${:02X}), Y", argb),
+        })
+        .trim_end()
+        .to_string()
+}
+
+impl AddresingMode {
+    fn is_input_address(&self) -> bool {
+        match self {
+            AddresingMode::NON | AddresingMode::REL | AddresingMode::IMP | AddresingMode::ACC | AddresingMode::IMM => {
+                false
+            }
+
+            _ => true,
+        }
+    }
+
+    pub fn get_length(&self) -> u16 {
+        match self {
+            AddresingMode::IMP | AddresingMode::ACC => 1,
+            AddresingMode::ZPG
+            | AddresingMode::ZPX
+            | AddresingMode::ZPY
+            | AddresingMode::IMM
+            | AddresingMode::REL
+            | AddresingMode::IDX
+            | AddresingMode::IDY => 2,
+            _ => 3,
+        }
+    }
+}
 
 fn make_opcode(
     name: &'static str,

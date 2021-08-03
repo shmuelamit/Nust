@@ -29,8 +29,8 @@ pub fn get_input(cpu: &mut Cpu, addresing_mode: AddresingMode) -> (u16, bool) {
     match addresing_mode {
         AddresingMode::NON => (0, false),
         AddresingMode::ZPG => (argb as u16, false),
-        AddresingMode::ZPX => ((argb + cpu.reg_x) as u16, false),
-        AddresingMode::ZPY => ((argb + cpu.reg_y) as u16, false),
+        AddresingMode::ZPX => ((argb.wrapping_add(cpu.reg_x)) as u16, false),
+        AddresingMode::ZPY => ((argb.wrapping_add(cpu.reg_y)) as u16, false),
         AddresingMode::ABS => (argw, false),
         AddresingMode::ABX => add_chk_page_cross(argw, cpu.reg_x as u16),
         AddresingMode::ABY => add_chk_page_cross(argw, cpu.reg_y as u16),
@@ -45,6 +45,7 @@ pub fn get_input(cpu: &mut Cpu, addresing_mode: AddresingMode) -> (u16, bool) {
 }
 
 // SHOULD BE USED ONLY ONCED PER INSTRUCTION
+// Does an eager read, hope that would not mess anything up
 pub fn read_instr_value(cpu: &mut Cpu, mode: AddresingMode) -> (u16, u8, bool) {
     let (input, cross) = get_input(cpu, mode);
     let value = get_value(cpu, mode, input);

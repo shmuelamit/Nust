@@ -1,8 +1,10 @@
 use bitflags::bitflags;
-use nom::{bytes::complete::{tag, take}, error::context, number::complete::be_u8, sequence::tuple, IResult, Err};
-use std::fs::File;
-use std::io::Read;
-use nom::error::Error;
+use nom::{
+    bytes::complete::{tag, take},
+    error::context,
+    IResult,
+    number::complete::be_u8, sequence::tuple,
+};
 
 // Decided to implement INES instead of NES 2.0 out of pure laziness
 // might change later to the fancier format but for now we have backwards compatability
@@ -109,7 +111,11 @@ pub fn parse_ines_bytes(input: &[u8]) -> IResult<&[u8], InesFile> {
             next_input,
             InesFile {
                 header,
-                trainer: if trainer.len() == 0 { None } else { Some(trainer) },
+                trainer: if trainer.len() == 0 {
+                    None
+                } else {
+                    Some(trainer)
+                },
                 prg_rom,
                 chr_rom,
             },

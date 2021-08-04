@@ -11,6 +11,8 @@ use crate::nes_parser::InesFile;
 use bus::Bus;
 use instructions::*;
 
+const STACK_START_ADDR: u16 = 0x100;
+
 bitflags! {
     #[derive(Default)]
     pub struct CpuFlags: u8 {
@@ -73,24 +75,25 @@ impl<'a> Cpu<'a> {
     }
 
     pub fn stack_push(&mut self, value: u8) {
-        self.bus.write(0x100 + self.stack_pointer as u16, value);
+        self.bus
+            .write(STACK_START_ADDR + self.stack_pointer as u16, value);
         self.stack_pointer -= 1;
     }
 
     pub fn stack_push_word(&mut self, value: u16) {
-        self.bus
-            .write_word(0x100 + self.stack_pointer as u16, value);
-        self.stack_pointer -= 1;
+        self.stack_push((value >> 8) as u8);
+        self.stack_push((value & 0xff) as u8);
     }
 
     pub fn stack_pop(&mut self) -> u8 {
         self.stack_pointer += 1;
-        self.bus.read(0x100 + self.stack_pointer as u16)
+        self.bus.read(STACK_START_ADDR + self.stack_pointer as u16)
     }
 
     pub fn stack_pop_word(&mut self) -> u16 {
-        self.stack_pointer += 1;
-        self.bus.read_word(0x100 + self.stack_pointer as u16)
+        let lo = self.stack_pop() as u16;
+        let hi = self.stack_pop() as u16;
+        hi << 8 | lo
     }
 
     pub fn get_opcode_table(&self) -> [Opcode; 256] {
@@ -104,7 +107,7 @@ impl<'a> Cpu<'a> {
             prg_ram: ines.prg_ram.as_slice(),
             chr_rom: ines.chr_rom.as_slice(),
             mapper: get_mapper(&ines).unwrap(),
-            cycles: 0,
+            cycles: 7,
         };
 
         Self {
@@ -112,8 +115,8 @@ impl<'a> Cpu<'a> {
             reg_a: 0,
             reg_x: 0,
             reg_y: 0,
-            status: CpuFlags::from_bits_truncate(7),
-            stack_pointer: 0xFF,
+            status: CpuFlags::BS,
+            stack_pointer: 0xFD,
             opcode_table: instructions::get_opcode_table(),
             bus,
         }

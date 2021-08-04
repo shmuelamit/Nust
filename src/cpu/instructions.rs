@@ -47,7 +47,8 @@ impl Default for Instruction {
             execute: |cpu: &mut Cpu, _mode: AddresingMode| {
                 panic!(
                     "Invalid CPU instruction {:02X}!\nCPU state at invalid instruction:\n{}",
-                    cpu.bus.read(cpu.program_counter), cpu
+                    cpu.bus.read(cpu.program_counter),
+                    cpu
                 )
             },
         }
@@ -80,7 +81,7 @@ impl Opcode {
     }
 }
 
-// Used for debugging purposes
+// Used for debugging purposes, mostly used with nestest.log
 pub fn addr_to_instr(cpu: &Cpu, addr: u16) -> String {
     let (opcode, argb, argw) = (
         cpu.bus.read(addr),
@@ -94,23 +95,42 @@ pub fn addr_to_instr(cpu: &Cpu, addr: u16) -> String {
         + " "
         + &match opcode.addresing_mode {
             AddresingMode::NON => "".to_string(),
-            AddresingMode::ZPG => format!("${:02x}", argb),
+            AddresingMode::ZPG => format!("${:02X} = {:02X}", argb, cpu.bus.read(argb as u16)),
             AddresingMode::ZPX => format!("${:02X}, X", argb),
             AddresingMode::ZPY => format!("${:02X}, Y", argb),
-            AddresingMode::ABS => format!("${:04X}", argw),
+            AddresingMode::ABS => format!("${:04X} = {:02X}", argw, cpu.bus.read(argw)),
             AddresingMode::ABX => format!("${:04X}, X", argw),
             AddresingMode::ABY => format!("${:04X}, Y", argw),
-            AddresingMode::IND => format!("(${:04X})", argw),
+            AddresingMode::IND => format!("(${:04X}) = {:04X}", argw, if argw & 0xFF == 0xFF {
+                cpu.bus.read_word(argw)
+            } else {
+                ((cpu.bus.read(argw & 0xFF00) as u16) << 8) as u16 | cpu.bus.read(argw) as u16
+            }),
             AddresingMode::IMP => "".to_string(),
             AddresingMode::ACC => "A".to_string(),
             AddresingMode::IMM => format!("#{:02X}", argb),
             AddresingMode::REL => format!(
-                "*{:>+} [{:04X}]",
-                argb as i8,
-                (addr as i16).wrapping_add((argb as i8) as i16) as u16
+                "${:04X}",
+                (addr as i16)
+                    .wrapping_add((argb as i8) as i16)
+                    .wrapping_add(2) as u16
             ),
-            AddresingMode::IDX => format!("(${:02X}, X)", argb),
-            AddresingMode::IDY => format!("(${:02X}), Y", argb),
+            AddresingMode::IDX => format!(
+                "(${:02X}, X) @ {:02X} = {:04X} = {:02X}",
+                argb,
+                argb.wrapping_add(cpu.reg_x),
+                cpu.bus.read_zp_word(argb.wrapping_add(cpu.reg_x)),
+                cpu.bus
+                    .read(cpu.bus.read_zp_word(argb.wrapping_add(cpu.reg_x)))
+            ),
+            AddresingMode::IDY => format!(
+                "(${:02X}),Y = {:04X} @ {:04X} = {:02X}",
+                argb,
+                cpu.bus.read_zp_word(argb),
+                cpu.bus.read_zp_word(argb).wrapping_add(cpu.reg_y as u16),
+                cpu.bus
+                    .read(cpu.bus.read_zp_word(argb).wrapping_add(cpu.reg_y as u16))
+            ),
         })
         .trim_end()
         .to_string()
@@ -119,9 +139,11 @@ pub fn addr_to_instr(cpu: &Cpu, addr: u16) -> String {
 impl AddresingMode {
     fn is_input_address(&self) -> bool {
         match self {
-            AddresingMode::NON | AddresingMode::REL | AddresingMode::IMP | AddresingMode::ACC | AddresingMode::IMM => {
-                false
-            }
+            AddresingMode::NON
+            | AddresingMode::REL
+            | AddresingMode::IMP
+            | AddresingMode::ACC
+            | AddresingMode::IMM => false,
 
             _ => true,
         }
@@ -313,8 +335,8 @@ pub fn get_opcode_table() -> [Opcode; 256] {
     table[0x6a] = make_opcode("ROR", rmw_opcodes::instr_ror, AddresingMode::ACC, 2);
     table[0x66] = make_opcode("ROR", rmw_opcodes::instr_ror, AddresingMode::ZPG, 5);
     table[0x76] = make_opcode("ROR", rmw_opcodes::instr_ror, AddresingMode::ZPX, 6);
-    table[0x7e] = make_opcode("ROR", rmw_opcodes::instr_ror, AddresingMode::ABS, 6);
-    table[0x6e] = make_opcode("ROR", rmw_opcodes::instr_ror, AddresingMode::ABX, 6);
+    table[0x7e] = make_opcode("ROR", rmw_opcodes::instr_ror, AddresingMode::ABX, 6);
+    table[0x6e] = make_opcode("ROR", rmw_opcodes::instr_ror, AddresingMode::ABS, 6);
 
     table[0xe9] = make_opcode("SBC", read_opcodes::instr_sbc, AddresingMode::IMM, 2);
     table[0xe5] = make_opcode("SBC", read_opcodes::instr_sbc, AddresingMode::ZPG, 3);

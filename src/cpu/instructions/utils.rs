@@ -34,13 +34,20 @@ pub fn get_input(cpu: &mut Cpu, addresing_mode: AddresingMode) -> (u16, bool) {
         AddresingMode::ABS => (argw, false),
         AddresingMode::ABX => add_chk_page_cross(argw, cpu.reg_x as u16),
         AddresingMode::ABY => add_chk_page_cross(argw, cpu.reg_y as u16),
-        AddresingMode::IND => (cpu.bus.read_word(argw), false),
+        AddresingMode::IND => (
+            if argw & 0xFF == 0xFF { // Just IND having a stroke at page boundaries
+                ((cpu.bus.read(argw & 0xFF00) as u16) << 8) as u16 | cpu.bus.read(argw) as u16
+            } else {
+                cpu.bus.read_word(argw)
+            },
+            false,
+        ),
         AddresingMode::IMP => (0, false),
         AddresingMode::ACC => (cpu.reg_a as u16, false),
         AddresingMode::IMM => (argb as u16, false),
         AddresingMode::REL => (argb as u16, false),
-        AddresingMode::IDX => (cpu.bus.read_word(argw + cpu.reg_x as u16), false),
-        AddresingMode::IDY => add_chk_page_cross(cpu.bus.read_word(argw), cpu.reg_y as u16),
+        AddresingMode::IDX => (cpu.bus.read_zp_word(argb.wrapping_add(cpu.reg_x)), false),
+        AddresingMode::IDY => add_chk_page_cross(cpu.bus.read_zp_word(argb), cpu.reg_y as u16),
     }
 }
 

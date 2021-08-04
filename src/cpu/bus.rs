@@ -14,9 +14,10 @@ impl Bus<'_> {
         match addr {
             0x0000..=0x1FFF => self.ram[(addr & 0x7FF) as usize],
             0x2000..=0x401F => {
-                println!("Warning: Unimplemented PPU register read mapping - current instruction did nothing"); 0
+                println!("Warning: Unimplemented PPU register read mapping - current instruction did nothing");
+                0
                 // Warn so I can test TODO implement PPU register mappings
-            },
+            }
             0x4020..=0x5FFF => todo!("Expansion ROM"),
             0x6000..=0x7FFF => todo!("SRAM and saving mechanisms"),
             0x8000..=0xFFFF => {
@@ -29,12 +30,17 @@ impl Bus<'_> {
     }
 
     pub fn read_word(&self, addr: u16) -> u16 {
-        (self.read(addr) as u16) + ((self.read(addr + 1) as u16) << 8)
+        (self.read(addr) as u16) | ((self.read(addr + 1) as u16) << 8)
+    }
+
+    pub fn read_zp_word(&self, addr: u8) -> u16 {
+        (self.read(addr as u16) as u16) | ((self.read(addr.wrapping_add(1) as u16) as u16) << 8)
     }
 
     pub fn write(&mut self, addr: u16, value: u8) {
         match addr {
             0x0000..=0x1FFF => {
+                println!("RAMWRT: {:02X} -> {:04X}", value, addr & 0x7FF);
                 self.ram[(addr & 0x07FF) as usize] = value;
             }
             0x2000..=0x3FFF => {
@@ -48,8 +54,13 @@ impl Bus<'_> {
     }
 
     pub fn write_word(&mut self, addr: u16, value: u16) {
-        self.write(addr, (value >> 8) as u8);
-        self.write(addr + 1, (value & 0xFF) as u8);
+        self.write(addr + 1, (value >> 8) as u8);
+        self.write(addr, (value & 0xFF) as u8);
+    }
+
+    pub fn write_zp_word(&mut self, addr: u8, value: u16) {
+        self.write(addr.wrapping_add(1) as u16, (value >> 8) as u8);
+        self.write(addr as u16, (value & 0xFF) as u8);
     }
 
     pub fn cycle(&mut self, cycles: u8) {

@@ -76,7 +76,6 @@ pub fn instr_tsx(cpu: &mut Cpu, _mode: AddresingMode) {
 
 pub fn instr_txs(cpu: &mut Cpu, _mode: AddresingMode) {
     cpu.stack_pointer = cpu.reg_x;
-    set_nz_flags(cpu, cpu.stack_pointer);
 }
 
 pub fn instr_txa(cpu: &mut Cpu, _mode: AddresingMode) {

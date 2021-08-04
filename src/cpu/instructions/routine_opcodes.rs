@@ -8,7 +8,7 @@ pub fn instr_pha(cpu: &mut Cpu, _mode: AddresingMode) {
 
 pub fn instr_php(cpu: &mut Cpu, _mode: AddresingMode) {
     cpu.stack_push((cpu.status | CpuFlags::BS | CpuFlags::B).bits());
-    cpu.status.remove(CpuFlags::BS | CpuFlags::B)
+    cpu.status.remove(CpuFlags::B)
 }
 
 pub fn instr_pla(cpu: &mut Cpu, _mode: AddresingMode) {
@@ -17,8 +17,8 @@ pub fn instr_pla(cpu: &mut Cpu, _mode: AddresingMode) {
 }
 
 pub fn instr_plp(cpu: &mut Cpu, mode: AddresingMode) {
-    // Panic shouldn't happen because we have all flag possibilities
-    cpu.status = CpuFlags::from_bits(cpu.stack_pop()).unwrap();
+    cpu.status = CpuFlags::from_bits_truncate(cpu.stack_pop());
+    cpu.status.remove(CpuFlags::B);
     cpu.status.insert(CpuFlags::BS)
 }
 
@@ -42,14 +42,19 @@ pub fn instr_brk(cpu: &mut Cpu, mode: AddresingMode) {
 pub fn instr_rti(cpu: &mut Cpu, mode: AddresingMode) {
     // Panic shouldn't happen because we have all flag possibilities
     cpu.status = CpuFlags::from_bits(cpu.stack_pop()).unwrap();
-    cpu.status.remove(CpuFlags::BS | CpuFlags::B);
+    cpu.status.remove(CpuFlags::B);
+    cpu.status.insert(CpuFlags::BS);
 
     cpu.program_counter = cpu.stack_pop_word() - mode.get_length();
 }
 
 pub fn instr_jsr(cpu: &mut Cpu, mode: AddresingMode) {
     let (input, _cross) = get_input(cpu, mode);
-    cpu.stack_push_word(cpu.program_counter.wrapping_sub(1));
+    cpu.stack_push_word(
+        cpu.program_counter
+            .wrapping_add(mode.get_length())
+            .wrapping_sub(1),
+    );
     cpu.program_counter = input - mode.get_length()
 }
 

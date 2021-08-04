@@ -38,24 +38,56 @@ pub fn instr_lsr(cpu: &mut Cpu, mode: AddresingMode) {
 
 pub fn instr_rol(cpu: &mut Cpu, mode: AddresingMode) {
     let (input, value, _cross) = read_instr_value(cpu, mode);
+    let newval = (value << 1) | (cpu.status.contains(CpuFlags::C) as u8);
+
     cpu.status.set(CpuFlags::C, value & (1u8 << 7) != 0);
-    general_shift(cpu, mode, input, value, u8::rotate_right);
+
+    if mode.is_input_address() {
+        cpu.bus.write(input, newval);
+    } else {
+        cpu.reg_a = newval;
+    }
+
+    set_nz_flags(cpu, newval);
 }
 
 pub fn instr_ror(cpu: &mut Cpu, mode: AddresingMode) {
     let (input, value, _cross) = read_instr_value(cpu, mode);
+    let newval = (value >> 1) | ((cpu.status.contains(CpuFlags::C) as u8) << 7);
+
     cpu.status.set(CpuFlags::C, value & 1 != 0);
-    general_shift(cpu, mode, input, value, u8::rotate_right);
+    println!(
+        "{:04X}: DOING ROR ON {:02X} AND GOT {:02X}",
+        cpu.program_counter, value, newval
+    );
+
+    if mode.is_input_address() {
+        cpu.bus.write(input, newval);
+    } else {
+        cpu.reg_a = newval;
+    }
+
+    set_nz_flags(cpu, newval);
 }
 
 pub fn instr_inc(cpu: &mut Cpu, mode: AddresingMode) {
-    let (_input, value, _cross) = read_instr_value(cpu, mode);
+    let (input, value, _cross) = read_instr_value(cpu, mode);
     let newval = value.wrapping_add(1);
+    if mode.is_input_address() {
+        cpu.bus.write(input, newval);
+    } else {
+        cpu.reg_a = newval;
+    }
     set_nz_flags(cpu, newval);
 }
 
 pub fn instr_dec(cpu: &mut Cpu, mode: AddresingMode) {
-    let (_input, value, _cross) = read_instr_value(cpu, mode);
+    let (input, value, _cross) = read_instr_value(cpu, mode);
     let newval = value.wrapping_sub(1);
+    if mode.is_input_address() {
+        cpu.bus.write(input, newval);
+    } else {
+        cpu.reg_a = newval;
+    }
     set_nz_flags(cpu, newval);
 }

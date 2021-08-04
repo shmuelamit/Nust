@@ -4,6 +4,10 @@ use crate::cpu::*;
 pub fn instr_lda(cpu: &mut Cpu, mode: AddresingMode) {
     let (_input, value, _cross) = read_instr_value(cpu, mode);
     cpu.reg_a = value;
+    println!(
+        "[{:04X}] LDA val = {:02X}, addr = {:04X}",
+        cpu.program_counter, value, _input
+    );
     set_nz_flags(cpu, value);
 }
 
@@ -56,7 +60,7 @@ fn _add(cpu: &mut Cpu, value: u8) {
     cpu.status.set(CpuFlags::C, sum >> 8 != 0);
     cpu.status.set(
         CpuFlags::V,
-        (cpu.reg_a ^ result) & (value & result) & 0x80 != 0,
+        (cpu.reg_a as u16 ^ sum) & (value as u16 ^ sum) & 0x80 != 0,
     );
     cpu.reg_a = result;
     set_nz_flags(cpu, result);

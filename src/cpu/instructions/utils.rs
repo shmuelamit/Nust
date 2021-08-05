@@ -13,10 +13,18 @@ pub fn set_nz_flags(cpu: &mut Cpu, result: u8) {
     cpu.status.set(CpuFlags::N, result & (1 << 7) != 0);
 }
 
+// ASL, LSR, DEC, INC, ROL, ROR, STA don't need cross
+fn does_current_instr_need_cross(cpu: &mut Cpu) -> bool {
+    match cpu.get_opcode_table()[cpu.bus.read(cpu.program_counter) as usize].instr.name {
+        "ASL" | "LSR" | "DEC" | "INC" | "ROL" | "ROR" | "STA" => false,
+        _ => true
+    }
+}
+
 // add and checks for page cross
-fn add_chk_page_cross(addr: u16, offset: u16) -> (u16, bool) {
+fn add_chk_page_cross(cpu: &mut Cpu, addr: u16, offset: u16) -> (u16, bool) {
     let result = addr.wrapping_add(offset);
-    (result, addr >> 8 != result >> 8)
+    (result, (addr >> 8 != result >> 8) && does_current_instr_need_cross(cpu))
 }
 
 // also returns if we crossed a page
@@ -32,8 +40,8 @@ pub fn get_input(cpu: &mut Cpu, addresing_mode: AddresingMode) -> (u16, bool) {
         AddresingMode::ZPX => ((argb.wrapping_add(cpu.reg_x)) as u16, false),
         AddresingMode::ZPY => ((argb.wrapping_add(cpu.reg_y)) as u16, false),
         AddresingMode::ABS => (argw, false),
-        AddresingMode::ABX => add_chk_page_cross(argw, cpu.reg_x as u16),
-        AddresingMode::ABY => add_chk_page_cross(argw, cpu.reg_y as u16),
+        AddresingMode::ABX => add_chk_page_cross(cpu, argw, cpu.reg_x as u16),
+        AddresingMode::ABY => add_chk_page_cross(cpu, argw, cpu.reg_y as u16),
         AddresingMode::IND => (
             if argw & 0xFF == 0xFF { // Just IND having a stroke at page boundaries
                 ((cpu.bus.read(argw & 0xFF00) as u16) << 8) as u16 | cpu.bus.read(argw) as u16
@@ -47,7 +55,7 @@ pub fn get_input(cpu: &mut Cpu, addresing_mode: AddresingMode) -> (u16, bool) {
         AddresingMode::IMM => (argb as u16, false),
         AddresingMode::REL => (argb as u16, false),
         AddresingMode::IDX => (cpu.bus.read_zp_word(argb.wrapping_add(cpu.reg_x)), false),
-        AddresingMode::IDY => add_chk_page_cross(cpu.bus.read_zp_word(argb), cpu.reg_y as u16),
+        AddresingMode::IDY => add_chk_page_cross(cpu, cpu.bus.read_zp_word(argb), cpu.reg_y as u16),
     }
 }
 

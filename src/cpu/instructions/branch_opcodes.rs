@@ -7,7 +7,8 @@ fn branch(cpu: &mut Cpu, mode: AddresingMode) {
     cpu.bus.cycle(1);
 
     let newpc = (cpu.program_counter as i16).wrapping_add(value as i16) as u16;
-    if newpc >> 8 != cpu.program_counter >> 8 {
+    // Bullshit reason for +2 but ok, http://forum.6502.org/viewtopic.php?f=8&t=6370
+    if newpc & 0xFF00 != (cpu.program_counter.wrapping_add(2)) & 0xFF00 {
         cpu.bus.cycle(1);
     }
 

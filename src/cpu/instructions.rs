@@ -201,7 +201,7 @@ pub fn get_opcode_table() -> [Opcode; 256] {
     table[0x06] = make_opcode("ASL", rmw_opcodes::instr_asl, AddresingMode::ZPG, 5);
     table[0x16] = make_opcode("ASL", rmw_opcodes::instr_asl, AddresingMode::ZPX, 6);
     table[0x0e] = make_opcode("ASL", rmw_opcodes::instr_asl, AddresingMode::ABS, 6);
-    table[0x1e] = make_opcode("ASL", rmw_opcodes::instr_asl, AddresingMode::ABX, 6);
+    table[0x1e] = make_opcode("ASL", rmw_opcodes::instr_asl, AddresingMode::ABX, 7);
 
     table[0x90] = make_opcode("BCC", branch_opcodes::instr_bcc, AddresingMode::REL, 2);
     table[0xB0] = make_opcode("BCS", branch_opcodes::instr_bcs, AddresingMode::REL, 2);
@@ -214,9 +214,6 @@ pub fn get_opcode_table() -> [Opcode; 256] {
 
     table[0x24] = make_opcode("BIT", read_opcodes::instr_bit, AddresingMode::ZPG, 3);
     table[0x2c] = make_opcode("BIT", read_opcodes::instr_bit, AddresingMode::ABS, 4);
-    table[0x89] = make_opcode("BIT", read_opcodes::instr_bit, AddresingMode::IMM, 2);
-    table[0x34] = make_opcode("BIT", read_opcodes::instr_bit, AddresingMode::ZPX, 4);
-    table[0x3c] = make_opcode("BIT", read_opcodes::instr_bit, AddresingMode::ABX, 4);
 
     table[0x00] = make_opcode("BRK", routine_opcodes::instr_brk, AddresingMode::IMP, 7);
 
@@ -265,7 +262,6 @@ pub fn get_opcode_table() -> [Opcode; 256] {
     table[0xd6] = make_opcode("DEC", rmw_opcodes::instr_dec, AddresingMode::ZPX, 6);
     table[0xce] = make_opcode("DEC", rmw_opcodes::instr_dec, AddresingMode::ABS, 6);
     table[0xde] = make_opcode("DEC", rmw_opcodes::instr_dec, AddresingMode::ABX, 7);
-    table[0x3a] = make_opcode("DEC", rmw_opcodes::instr_dec, AddresingMode::ACC, 2);
 
     table[0xca] = make_opcode("DEX", imp_opcodes::instr_dex, AddresingMode::IMP, 2);
     table[0x88] = make_opcode("DEY", imp_opcodes::instr_dey, AddresingMode::IMP, 2);
@@ -285,11 +281,9 @@ pub fn get_opcode_table() -> [Opcode; 256] {
     table[0xf6] = make_opcode("INC", rmw_opcodes::instr_inc, AddresingMode::ZPX, 6);
     table[0xee] = make_opcode("INC", rmw_opcodes::instr_inc, AddresingMode::ABS, 6);
     table[0xfe] = make_opcode("INC", rmw_opcodes::instr_inc, AddresingMode::ABX, 7);
-    table[0x1a] = make_opcode("INC", rmw_opcodes::instr_inc, AddresingMode::ACC, 2);
 
     table[0x4c] = make_opcode("JMP", routine_opcodes::instr_jmp, AddresingMode::ABS, 3);
     table[0x6c] = make_opcode("JMP", routine_opcodes::instr_jmp, AddresingMode::IND, 5);
-    table[0x7c] = make_opcode("JMP", routine_opcodes::instr_jmp, AddresingMode::ABX, 6);
 
     table[0x20] = make_opcode("JSR", routine_opcodes::instr_jsr, AddresingMode::ABS, 6);
 
@@ -316,7 +310,7 @@ pub fn get_opcode_table() -> [Opcode; 256] {
     table[0x46] = make_opcode("LSR", rmw_opcodes::instr_lsr, AddresingMode::ZPG, 5);
     table[0x56] = make_opcode("LSR", rmw_opcodes::instr_lsr, AddresingMode::ZPX, 6);
     table[0x4e] = make_opcode("LSR", rmw_opcodes::instr_lsr, AddresingMode::ABS, 6);
-    table[0x5e] = make_opcode("LSR", rmw_opcodes::instr_lsr, AddresingMode::ABX, 6);
+    table[0x5e] = make_opcode("LSR", rmw_opcodes::instr_lsr, AddresingMode::ABX, 7);
 
     table[0x09] = make_opcode("ORA", read_opcodes::instr_ora, AddresingMode::IMM, 2);
     table[0x05] = make_opcode("ORA", read_opcodes::instr_ora, AddresingMode::ZPG, 3);
@@ -331,12 +325,12 @@ pub fn get_opcode_table() -> [Opcode; 256] {
     table[0x26] = make_opcode("ROL", rmw_opcodes::instr_rol, AddresingMode::ZPG, 5);
     table[0x36] = make_opcode("ROL", rmw_opcodes::instr_rol, AddresingMode::ZPX, 6);
     table[0x2e] = make_opcode("ROL", rmw_opcodes::instr_rol, AddresingMode::ABS, 6);
-    table[0x3e] = make_opcode("ROL", rmw_opcodes::instr_rol, AddresingMode::ABX, 6);
+    table[0x3e] = make_opcode("ROL", rmw_opcodes::instr_rol, AddresingMode::ABX, 7);
     table[0x6a] = make_opcode("ROR", rmw_opcodes::instr_ror, AddresingMode::ACC, 2);
     table[0x66] = make_opcode("ROR", rmw_opcodes::instr_ror, AddresingMode::ZPG, 5);
     table[0x76] = make_opcode("ROR", rmw_opcodes::instr_ror, AddresingMode::ZPX, 6);
-    table[0x7e] = make_opcode("ROR", rmw_opcodes::instr_ror, AddresingMode::ABX, 6);
     table[0x6e] = make_opcode("ROR", rmw_opcodes::instr_ror, AddresingMode::ABS, 6);
+    table[0x7e] = make_opcode("ROR", rmw_opcodes::instr_ror, AddresingMode::ABX, 7);
 
     table[0xe9] = make_opcode("SBC", read_opcodes::instr_sbc, AddresingMode::IMM, 2);
     table[0xe5] = make_opcode("SBC", read_opcodes::instr_sbc, AddresingMode::ZPG, 3);

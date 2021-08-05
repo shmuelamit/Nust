@@ -36,7 +36,7 @@ pub fn instr_brk(cpu: &mut Cpu, mode: AddresingMode) {
     cpu.stack_push(cpu.status.bits());
     cpu.status.remove(CpuFlags::BS);
 
-    cpu.program_counter = cpu.bus.read_word(0xFFFE) - mode.get_length();
+    cpu.program_counter = cpu.bus.cpu_read_word(0xFFFE) - mode.get_length();
 }
 
 pub fn instr_rti(cpu: &mut Cpu, mode: AddresingMode) {

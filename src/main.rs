@@ -20,11 +20,11 @@ fn get_file_as_byte_vec(filename: &str) -> Vec<u8> {
 }
 
 fn dump_current_instruction(cpu: &mut Cpu) -> String {
-    let opcode = cpu.get_opcode_table()[cpu.bus.read(cpu.program_counter) as usize];
+    let opcode = cpu.get_opcode_table()[cpu.bus.cpu_read(cpu.program_counter) as usize];
     let mut s = format!("{:04X} ", cpu.program_counter);
     for i in 0..=2 {
         if (i + 1) <= opcode.get_length() {
-            s.push_str(&format!(" {:02X}", cpu.bus.read(cpu.program_counter + i)))
+            s.push_str(&format!(" {:02X}", cpu.bus.cpu_read(cpu.program_counter + i)))
         } else {
             s.push_str(&"   ")
         }

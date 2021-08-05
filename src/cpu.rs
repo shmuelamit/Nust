@@ -66,7 +66,7 @@ impl CpuFlags {
 
 impl<'a> Cpu<'a> {
     pub fn execute_next(&mut self) {
-        let opcode = self.opcode_table[self.bus.read(self.program_counter) as usize];
+        let opcode = self.opcode_table[self.bus.cpu_read(self.program_counter) as usize];
 
         (opcode.instr.execute)(self, opcode.addresing_mode);
 
@@ -76,7 +76,7 @@ impl<'a> Cpu<'a> {
 
     pub fn stack_push(&mut self, value: u8) {
         self.bus
-            .write(STACK_START_ADDR + self.stack_pointer as u16, value);
+            .cpu_write(STACK_START_ADDR + self.stack_pointer as u16, value);
         self.stack_pointer -= 1;
     }
 
@@ -87,7 +87,7 @@ impl<'a> Cpu<'a> {
 
     pub fn stack_pop(&mut self) -> u8 {
         self.stack_pointer += 1;
-        self.bus.read(STACK_START_ADDR + self.stack_pointer as u16)
+        self.bus.cpu_read(STACK_START_ADDR + self.stack_pointer as u16)
     }
 
     pub fn stack_pop_word(&mut self) -> u16 {
@@ -111,7 +111,7 @@ impl<'a> Cpu<'a> {
         };
 
         Self {
-            program_counter: bus.read_word(0xFFFC),
+            program_counter: bus.cpu_read_word(0xFFFC),
             reg_a: 0,
             reg_x: 0,
             reg_y: 0,

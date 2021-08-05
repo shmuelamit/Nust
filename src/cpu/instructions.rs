@@ -47,7 +47,7 @@ impl Default for Instruction {
             execute: |cpu: &mut Cpu, _mode: AddresingMode| {
                 panic!(
                     "Invalid CPU instruction {:02X}!\nCPU state at invalid instruction:\n{}",
-                    cpu.bus.read(cpu.program_counter),
+                    cpu.bus.cpu_read(cpu.program_counter),
                     cpu
                 )
             },
@@ -84,9 +84,9 @@ impl Opcode {
 // Used for debugging purposes, mostly used with nestest.log
 pub fn addr_to_instr(cpu: &Cpu, addr: u16) -> String {
     let (opcode, argb, argw) = (
-        cpu.bus.read(addr),
-        cpu.bus.read(addr + 1),
-        cpu.bus.read_word(addr + 1),
+        cpu.bus.cpu_read(addr),
+        cpu.bus.cpu_read(addr + 1),
+        cpu.bus.cpu_read_word(addr + 1),
     );
 
     let opcode = cpu.get_opcode_table()[opcode as usize];
@@ -95,16 +95,16 @@ pub fn addr_to_instr(cpu: &Cpu, addr: u16) -> String {
         + " "
         + &match opcode.addresing_mode {
             AddresingMode::NON => "".to_string(),
-            AddresingMode::ZPG => format!("${:02X} = {:02X}", argb, cpu.bus.read(argb as u16)),
+            AddresingMode::ZPG => format!("${:02X} = {:02X}", argb, cpu.bus.cpu_read(argb as u16)),
             AddresingMode::ZPX => format!("${:02X}, X", argb),
             AddresingMode::ZPY => format!("${:02X}, Y", argb),
-            AddresingMode::ABS => format!("${:04X} = {:02X}", argw, cpu.bus.read(argw)),
+            AddresingMode::ABS => format!("${:04X} = {:02X}", argw, cpu.bus.cpu_read(argw)),
             AddresingMode::ABX => format!("${:04X}, X", argw),
             AddresingMode::ABY => format!("${:04X}, Y", argw),
             AddresingMode::IND => format!("(${:04X}) = {:04X}", argw, if argw & 0xFF == 0xFF {
-                cpu.bus.read_word(argw)
+                cpu.bus.cpu_read_word(argw)
             } else {
-                ((cpu.bus.read(argw & 0xFF00) as u16) << 8) as u16 | cpu.bus.read(argw) as u16
+                ((cpu.bus.cpu_read(argw & 0xFF00) as u16) << 8) as u16 | cpu.bus.cpu_read(argw) as u16
             }),
             AddresingMode::IMP => "".to_string(),
             AddresingMode::ACC => "A".to_string(),
@@ -119,17 +119,17 @@ pub fn addr_to_instr(cpu: &Cpu, addr: u16) -> String {
                 "(${:02X}, X) @ {:02X} = {:04X} = {:02X}",
                 argb,
                 argb.wrapping_add(cpu.reg_x),
-                cpu.bus.read_zp_word(argb.wrapping_add(cpu.reg_x)),
+                cpu.bus.cpu_read_zp_word(argb.wrapping_add(cpu.reg_x)),
                 cpu.bus
-                    .read(cpu.bus.read_zp_word(argb.wrapping_add(cpu.reg_x)))
+                    .cpu_read(cpu.bus.cpu_read_zp_word(argb.wrapping_add(cpu.reg_x)))
             ),
             AddresingMode::IDY => format!(
                 "(${:02X}),Y = {:04X} @ {:04X} = {:02X}",
                 argb,
-                cpu.bus.read_zp_word(argb),
-                cpu.bus.read_zp_word(argb).wrapping_add(cpu.reg_y as u16),
+                cpu.bus.cpu_read_zp_word(argb),
+                cpu.bus.cpu_read_zp_word(argb).wrapping_add(cpu.reg_y as u16),
                 cpu.bus
-                    .read(cpu.bus.read_zp_word(argb).wrapping_add(cpu.reg_y as u16))
+                    .cpu_read(cpu.bus.cpu_read_zp_word(argb).wrapping_add(cpu.reg_y as u16))
             ),
         })
         .trim_end()

@@ -16,7 +16,7 @@ fn general_shift(
     let newval = oper(value, 1);
 
     if mode.is_input_address() {
-        cpu.bus.write(input, newval);
+        cpu.bus.cpu_write(input, newval);
     } else {
         cpu.reg_a = newval;
     }
@@ -43,7 +43,7 @@ pub fn instr_rol(cpu: &mut Cpu, mode: AddresingMode) {
     cpu.status.set(CpuFlags::C, value & (1u8 << 7) != 0);
 
     if mode.is_input_address() {
-        cpu.bus.write(input, newval);
+        cpu.bus.cpu_write(input, newval);
     } else {
         cpu.reg_a = newval;
     }
@@ -62,7 +62,7 @@ pub fn instr_ror(cpu: &mut Cpu, mode: AddresingMode) {
     );
 
     if mode.is_input_address() {
-        cpu.bus.write(input, newval);
+        cpu.bus.cpu_write(input, newval);
     } else {
         cpu.reg_a = newval;
     }
@@ -74,7 +74,7 @@ pub fn instr_inc(cpu: &mut Cpu, mode: AddresingMode) {
     let (input, value, _cross) = read_instr_value(cpu, mode);
     let newval = value.wrapping_add(1);
     if mode.is_input_address() {
-        cpu.bus.write(input, newval);
+        cpu.bus.cpu_write(input, newval);
     } else {
         cpu.reg_a = newval;
     }
@@ -85,7 +85,7 @@ pub fn instr_dec(cpu: &mut Cpu, mode: AddresingMode) {
     let (input, value, _cross) = read_instr_value(cpu, mode);
     let newval = value.wrapping_sub(1);
     if mode.is_input_address() {
-        cpu.bus.write(input, newval);
+        cpu.bus.cpu_write(input, newval);
     } else {
         cpu.reg_a = newval;
     }

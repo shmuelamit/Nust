@@ -1,6 +1,6 @@
 mod bus;
 pub mod instructions;
-mod mappers;
+pub(crate) mod mappers;
 
 use std::fmt;
 
@@ -27,7 +27,7 @@ bitflags! {
     }
 }
 
-pub struct Cpu<'a> {
+pub struct Cpu {
     pub program_counter: u16,
     pub reg_a: u8,
     pub reg_x: u8,
@@ -35,10 +35,10 @@ pub struct Cpu<'a> {
     pub status: CpuFlags,
     pub stack_pointer: u8,
     opcode_table: [Opcode; 256],
-    pub bus: Bus<'a>,
+    bus: Bus,
 }
 
-impl fmt::Display for Cpu<'_> {
+impl fmt::Display for Cpu {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -64,7 +64,7 @@ impl CpuFlags {
     }
 }
 
-impl<'a> Cpu<'a> {
+impl Cpu {
     pub fn execute_next(&mut self) {
         let opcode = self.opcode_table[self.bus.cpu_read(self.program_counter) as usize];
 
@@ -87,7 +87,8 @@ impl<'a> Cpu<'a> {
 
     pub fn stack_pop(&mut self) -> u8 {
         self.stack_pointer += 1;
-        self.bus.cpu_read(STACK_START_ADDR + self.stack_pointer as u16)
+        self.bus
+            .cpu_read(STACK_START_ADDR + self.stack_pointer as u16)
     }
 
     pub fn stack_pop_word(&mut self) -> u16 {
@@ -100,16 +101,7 @@ impl<'a> Cpu<'a> {
         self.opcode_table
     }
 
-    pub fn create_from_ines(ines: &'a InesFile) -> Self {
-        let bus = Bus {
-            ram: [0; 0x800],
-            prg_rom: ines.prg_rom.as_slice(),
-            prg_ram: ines.prg_ram.as_slice(),
-            chr_rom: ines.chr_rom.as_slice(),
-            mapper: get_mapper(&ines).unwrap(),
-            cycles: 7,
-        };
-
+    pub fn create_from_bus(bus: Bus) -> Self {
         Self {
             program_counter: bus.cpu_read_word(0xFFFC),
             reg_a: 0,

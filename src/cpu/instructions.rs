@@ -101,11 +101,16 @@ pub fn addr_to_instr(cpu: &Cpu, addr: u16) -> String {
             AddresingMode::ABS => format!("${:04X} = {:02X}", argw, cpu.bus.cpu_read(argw)),
             AddresingMode::ABX => format!("${:04X}, X", argw),
             AddresingMode::ABY => format!("${:04X}, Y", argw),
-            AddresingMode::IND => format!("(${:04X}) = {:04X}", argw, if argw & 0xFF == 0xFF {
-                cpu.bus.cpu_read_word(argw)
-            } else {
-                ((cpu.bus.cpu_read(argw & 0xFF00) as u16) << 8) as u16 | cpu.bus.cpu_read(argw) as u16
-            }),
+            AddresingMode::IND => format!(
+                "(${:04X}) = {:04X}",
+                argw,
+                if argw & 0xFF == 0xFF {
+                    cpu.bus.cpu_read_word(argw)
+                } else {
+                    ((cpu.bus.cpu_read(argw & 0xFF00) as u16) << 8) as u16
+                        | cpu.bus.cpu_read(argw) as u16
+                }
+            ),
             AddresingMode::IMP => "".to_string(),
             AddresingMode::ACC => "A".to_string(),
             AddresingMode::IMM => format!("#{:02X}", argb),
@@ -127,13 +132,44 @@ pub fn addr_to_instr(cpu: &Cpu, addr: u16) -> String {
                 "(${:02X}),Y = {:04X} @ {:04X} = {:02X}",
                 argb,
                 cpu.bus.cpu_read_zp_word(argb),
-                cpu.bus.cpu_read_zp_word(argb).wrapping_add(cpu.reg_y as u16),
                 cpu.bus
-                    .cpu_read(cpu.bus.cpu_read_zp_word(argb).wrapping_add(cpu.reg_y as u16))
+                    .cpu_read_zp_word(argb)
+                    .wrapping_add(cpu.reg_y as u16),
+                cpu.bus.cpu_read(
+                    cpu.bus
+                        .cpu_read_zp_word(argb)
+                        .wrapping_add(cpu.reg_y as u16)
+                )
             ),
         })
         .trim_end()
         .to_string()
+}
+
+pub fn dump_current_instruction(cpu: &mut Cpu) -> String {
+    let opcode = cpu.get_opcode_table()[cpu.bus.cpu_read(cpu.program_counter) as usize];
+    let mut s = format!("{:04X} ", cpu.program_counter);
+    for i in 0..=2 {
+        if (i + 1) <= opcode.get_length() {
+            s.push_str(&format!(
+                " {:02X}",
+                cpu.bus.cpu_read(cpu.program_counter + i)
+            ))
+        } else {
+            s.push_str(&"   ")
+        }
+    }
+    s.push_str(&format!(
+        " {:30} A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} PPU:---,--- CYC:{}",
+        addr_to_instr(&cpu, cpu.program_counter),
+        cpu.reg_a,
+        cpu.reg_x,
+        cpu.reg_y,
+        cpu.status.bits(),
+        cpu.stack_pointer,
+        cpu.bus.get_cycles()
+    ));
+    s
 }
 
 impl AddresingMode {

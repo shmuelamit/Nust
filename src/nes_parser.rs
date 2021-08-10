@@ -1,3 +1,4 @@
+use crate::cpu::mappers::{get_mapper, Mapper};
 use bitflags::bitflags;
 use nom::{
     bytes::complete::{tag, take},
@@ -6,6 +7,8 @@ use nom::{
     sequence::tuple,
     IResult,
 };
+use std::fs;
+use std::io::Read;
 
 // Decided to implement INES instead of NES 2.0 out of pure laziness
 // might change later to the fancier format but for now we have backwards compatability
@@ -30,6 +33,12 @@ bitflags! {
     }
 }
 
+pub enum Mirroring {
+    Vertical,
+    Horizontal,
+    FourWay,
+}
+
 #[derive(Debug)]
 pub struct InesHeaderFlags {
     pub flags6: InesFlags6,
@@ -45,7 +54,6 @@ pub struct InesHeader {
     // In 8Kib units
     pub flags: InesHeaderFlags,
     pub mapper: u8,
-    pub prg_ram_size: u8,
 }
 
 #[derive(Debug)]
@@ -54,7 +62,15 @@ pub struct InesFile {
     pub trainer: Option<Vec<u8>>,
     pub prg_rom: Vec<u8>,
     pub chr_rom: Vec<u8>,
-    pub prg_ram: Vec<u8>,
+}
+
+// Like InesFile but nicer to handle
+pub struct Cartridge {
+    pub trainer: Option<Vec<u8>>,
+    pub prg_rom: Vec<u8>,
+    pub chr_rom: Vec<u8>,
+    pub mapper: Box<dyn Mapper>,
+    pub mirroring: Mirroring,
 }
 
 fn sign_parse(input: &[u8]) -> IResult<&[u8], &[u8]> {
@@ -78,17 +94,10 @@ fn mapper_flags_parse(input: &[u8]) -> IResult<&[u8], (u8, InesFlags6, InesFlags
 fn parse_ines_header(input: &[u8]) -> IResult<&[u8], InesHeader> {
     context(
         "INES header parser",
-        tuple((
-            sign_parse,
-            be_u8,
-            be_u8,
-            mapper_flags_parse,
-            be_u8,
-            take(7usize),
-        )),
+        tuple((sign_parse, be_u8, be_u8, mapper_flags_parse, take(8usize))),
     )(input)
     .map(|(next_input, res)| {
-        let (_signature, prg_size, chr_size, (mapper, flags6, flags7), prg_ram_size, _) = res;
+        let (_signature, prg_size, chr_size, (mapper, flags6, flags7), _) = res;
         (
             next_input,
             InesHeader {
@@ -96,7 +105,6 @@ fn parse_ines_header(input: &[u8]) -> IResult<&[u8], InesHeader> {
                 chr_size,
                 flags: InesHeaderFlags { flags6, flags7 },
                 mapper,
-                prg_ram_size,
             },
         )
     })
@@ -118,7 +126,6 @@ pub fn parse_ines_bytes(input: &[u8]) -> IResult<&[u8], InesFile> {
     )(input)
     .map(|(next_input, res)| {
         let (trainer, prg_rom, chr_rom) = res;
-        let prg_ram = vec![0; header.prg_ram_size as usize];
         let (trainer, prg_rom, chr_rom) = (trainer.to_vec(), prg_rom.to_vec(), chr_rom.to_vec());
         (
             next_input,
@@ -131,8 +138,38 @@ pub fn parse_ines_bytes(input: &[u8]) -> IResult<&[u8], InesFile> {
                 },
                 prg_rom,
                 chr_rom,
-                prg_ram,
             },
         )
     })
+}
+
+pub fn get_file_as_byte_vec(filename: &str) -> Vec<u8> {
+    let mut f = fs::File::open(filename).expect("no file found");
+    let metadata = fs::metadata(filename).expect("unable to read metadata");
+    let mut buffer = vec![0; metadata.len() as usize];
+    f.read(&mut buffer).expect("buffer overflow");
+
+    buffer
+}
+
+pub fn ines_to_cartridge(ines: InesFile) -> Cartridge {
+    let mapper = get_mapper(&ines).unwrap();
+
+    Cartridge {
+        trainer: ines.trainer,
+        prg_rom: ines.prg_rom,
+        chr_rom: ines.chr_rom,
+        mapper,
+        mirroring: {
+            if ines.header.flags.flags6.contains(InesFlags6::FOUR_SCREEN) {
+                Mirroring::FourWay
+            } else {
+                if ines.header.flags.flags6.contains(InesFlags6::MIRRORING) {
+                    Mirroring::Vertical
+                } else {
+                    Mirroring::Horizontal
+                }
+            }
+        },
+    }
 }

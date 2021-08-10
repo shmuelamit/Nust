@@ -1,6 +1,5 @@
 mod utils;
 use crate::cpu::*;
-use std::fmt::{Display, Formatter};
 
 pub mod branch_opcodes;
 pub mod imp_opcodes;

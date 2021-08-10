@@ -1,5 +1,6 @@
-use crate::cpu::mappers::{get_mapper, Mapper};
-use crate::nes_parser::{Cartridge, InesFile};
+use crate::nes_parser::{Cartridge};
+
+pub mod mappers;
 
 pub struct Bus {
     ram: [u8; 0x800],

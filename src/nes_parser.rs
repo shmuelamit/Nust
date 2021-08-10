@@ -1,4 +1,4 @@
-use crate::cpu::mappers::{get_mapper, Mapper};
+use crate::bus::mappers::{get_mapper, Mapper};
 use bitflags::bitflags;
 use nom::{
     bytes::complete::{tag, take},

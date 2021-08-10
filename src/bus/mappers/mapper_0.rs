@@ -1,4 +1,4 @@
-use crate::cpu::mappers::Mapper;
+use crate::bus::mappers::Mapper;
 
 pub(crate) struct Mapper0 {
     pub prg_banks: u8,

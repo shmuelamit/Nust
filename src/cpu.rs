@@ -1,15 +1,12 @@
-mod bus;
-pub mod instructions;
-pub(crate) mod mappers;
-
 use std::fmt;
 
 use bitflags::bitflags;
 
-use crate::cpu::mappers::get_mapper;
-use crate::nes_parser::InesFile;
-use bus::Bus;
 use instructions::*;
+
+use crate::bus::Bus;
+
+pub mod instructions;
 
 const STACK_START_ADDR: u16 = 0x100;
 

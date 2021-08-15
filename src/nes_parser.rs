@@ -110,7 +110,7 @@ fn parse_ines_header(input: &[u8]) -> IResult<&[u8], InesHeader> {
     })
 }
 
-pub fn parse_ines_bytes(input: &[u8]) -> IResult<&[u8], InesFile> {
+fn parse_ines_bytes(input: &[u8]) -> IResult<&[u8], InesFile> {
     let (input, header) = parse_ines_header(input)?;
     context(
         "INES file parser",
@@ -143,7 +143,7 @@ pub fn parse_ines_bytes(input: &[u8]) -> IResult<&[u8], InesFile> {
     })
 }
 
-pub fn get_file_as_byte_vec(filename: &str) -> Vec<u8> {
+fn get_file_as_byte_vec(filename: &str) -> Vec<u8> {
     let mut f = fs::File::open(filename).expect("no file found");
     let metadata = fs::metadata(filename).expect("unable to read metadata");
     let mut buffer = vec![0; metadata.len() as usize];
@@ -152,13 +152,13 @@ pub fn get_file_as_byte_vec(filename: &str) -> Vec<u8> {
     buffer
 }
 
-pub fn ines_to_cartridge(ines: InesFile) -> Cartridge {
+fn ines_to_cartridge(ines: InesFile) -> Cartridge {
     let mapper = get_mapper(&ines).unwrap();
 
     Cartridge {
-        trainer: ines.trainer,
-        prg_rom: ines.prg_rom,
-        chr_rom: ines.chr_rom,
+        trainer: ines.trainer.to_owned(),
+        prg_rom: ines.prg_rom.to_owned(),
+        chr_rom: ines.chr_rom.to_owned(),
         mapper,
         mirroring: {
             if ines.header.flags.flags6.contains(InesFlags6::FOUR_SCREEN) {
@@ -172,4 +172,13 @@ pub fn ines_to_cartridge(ines: InesFile) -> Cartridge {
             }
         },
     }
+}
+
+pub fn get_cartridge_from_file(filename: &str) -> Cartridge {
+    let contents = get_file_as_byte_vec(filename);
+    let ines = match parse_ines_bytes(&contents) {
+        Ok(result) => result.1,
+        Err(_) => panic!("Shit"),
+    };
+    ines_to_cartridge(ines)
 }
